@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { socketController } = require('../sockets/controller');
 
 class Server {
 
@@ -7,13 +8,19 @@ class Server {
         this.app  = express();
         this.port = process.env.PORT;
 
-        this.paths = {}
+        this.server = require('http').createServer( this.app );
+        this.io = require('socket.io')(this.server);
+
+        this.paths = {};
 
         // Middlewares
         this.middlewares();
 
         // Rutas de mi aplicación
         this.routes();
+
+        // Sockets
+        this.sockets();
     }
 
     async conectarDB() {
@@ -22,24 +29,23 @@ class Server {
 
 
     middlewares() {
-
         // CORS
         this.app.use( cors() );
 
         // Directorio Público
         this.app.use( express.static('public') );
-
     }
 
     routes() {
-        
         // this.app.use( this.paths.auth, require('../routes/auth'));
-        
-        
     }
 
+    sockets() {
+        this.io.on('connection', socketController);
+    };
+
     listen() {
-        this.app.listen( this.port, () => {
+        this.server.listen( this.port, () => {
             console.log('Servidor corriendo en puerto', this.port );
         });
     }
